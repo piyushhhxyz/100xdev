@@ -30,8 +30,45 @@
  */
 
 const express = require("express")
+// const { nanoid } = require('nanoid');
 const PORT = 3000;
 const app = express();
+
+
 // write your logic here, DONT WRITE app.listen(3000) when you're running tests, the tests will automatically start the server
+
+const users = [] ;
+app.use(express.json());
+
+app.post("/signup" , (req,res) => {
+  const {username, password, firstName, lastName} = req.body ;
+  if(users.find(obj => obj.username === username)) return res.status(400).json({msg: "Bad Request"}) ;
+
+  // const userId = nanoid();
+  const userId = users.length +1;
+  users.push({ id: userId, username, password, firstName, lastName });
+  return res.status(201).send('Signup successful');
+})
+
+app.post("/login", (req,res) => {
+  const {username, password} = req.body ;
+  const user = users.find(obj => obj.username === username)
+  
+  if(!user || user.password != password) return res.status(401).json({ error: 'Unauthorized' });
+  return res.status(200).json({ id: user.id,email: "testuser@gmail.com",username, firstName: user.firstName, lastName: user.lastName });
+})
+
+app.get("/data", (req,res) => {
+  const username = req.headers.username;
+  const password = req.headers.password;
+
+  const user = users.find(user => user.username === username && user.password === password);
+  if (!user) return res.status(401).send('Unauthorized');
+
+  const userData = users.map(user => ({ id: user.id, firstName: user.firstName, lastName: user.lastName }));
+  return res.status(200).json({ users: userData });
+})
+
+app.use((req, res) =>res.status(404).json({ error: 'Not Found' }))
 
 module.exports = app;

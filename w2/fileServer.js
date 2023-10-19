@@ -20,6 +20,43 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const app = express();
+const PORT = 3000;
 
+const filesDirectory = path.join(__dirname, 'files');
+console.log(__dirname) ;
+
+app.get('/files', (req, res) => {
+  fs.readdir(filesDirectory, (err, files) => {
+    if (err) {
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      console.log(files)
+      res.status(200).json(files);
+    }
+  });
+});
+
+// API endpoint to get the content of a specific file
+app.get('/file/:filename', (req, res) => {
+  const { filename } = req.params;
+  const filePath = path.join(filesDirectory, filename);
+
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      if (err.code === 'ENOENT') {
+        res.status(404).send('File not found');
+      } else {
+        res.status(500).json({ error: 'Internal Server Error' });
+      }
+    } else {
+      res.status(200).send(data);
+    }
+  });
+});
+
+// Handle routes not defined in the server
+app.use((req, res) => {
+  res.status(404).send('Route not found');
+});
 
 module.exports = app;
